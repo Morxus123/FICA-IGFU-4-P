@@ -1138,7 +1138,7 @@ def audit_status():
 def final_manifest():
     return {
         "name": "FICA–IGF-U",
-        "version": "4.0.0",
+        "version": "4.1.0",
         "release": "all-domains research framework",
         "status": "operational_prototype",
         "core_is_domain_neutral": True,
@@ -1253,6 +1253,159 @@ def science_coverage():
         "fully_automated_every_subfield":False,
         "reason":"No generic software system can honestly claim complete automation of every scientific subfield; v4.0 provides a common executable framework and extensible primitives.",
     }
+
+
+# v4.1 — representative executable domain engines.
+# These are bounded, auditable primitives for each major domain family.
+# They are deliberately not advertised as complete substitutes for specialist software.
+
+DOMAIN_ENGINES = {
+    "mathematics": ["linear_combination", "gcd", "evaluate_polynomial"],
+    "computer_information_sciences": ["graph_stats", "big_o_family"],
+    "physical_sciences": ["kinetic_energy", "ohms_law"],
+    "chemical_sciences": ["molarity", "reaction_balance_check"],
+    "earth_environmental_sciences": ["density", "temperature_anomaly"],
+    "biological_sciences": ["exponential_growth", "allele_frequency"],
+    "engineering_technology": ["stress", "rc_time_constant"],
+    "medical_health_sciences": ["bmi", "sensitivity_specificity"],
+    "agricultural_veterinary_sciences": ["yield_per_area", "feed_conversion_ratio"],
+    "social_sciences": ["mean", "response_rate"],
+    "humanities_arts": ["text_statistics", "argument_structure_check"],
+}
+
+def domain_engine(domain, operation, payload):
+    if domain not in DOMAIN_ENGINES:
+        raise ValueError("unknown domain")
+    if operation not in DOMAIN_ENGINES[domain]:
+        raise ValueError("operation not registered for domain")
+
+    x = payload
+    if domain == "mathematics":
+        if operation == "linear_combination":
+            a=x["a"]; b=x["b"]; alpha=x["alpha"]; beta=x["beta"]
+            return {"value":alpha*a+beta*b}
+        if operation == "gcd":
+            import math
+            return {"value":math.gcd(int(x["a"]), int(x["b"]))}
+        if operation == "evaluate_polynomial":
+            coeff=x["coefficients"]; at=x["x"]
+            value=0
+            for c in coeff: value=value*at+c
+            return {"value":value}
+
+    if domain == "computer_information_sciences":
+        if operation == "graph_stats":
+            nodes=x.get("nodes",[]); edges=x.get("edges",[])
+            return {"nodes":len(nodes),"edges":len(edges)}
+        if operation == "big_o_family":
+            family=x["family"]
+            allowed={"constant":"O(1)","logarithmic":"O(log n)",
+                     "linear":"O(n)","linearithmic":"O(n log n)",
+                     "quadratic":"O(n^2)","cubic":"O(n^3)",
+                     "exponential":"O(2^n)"}
+            if family not in allowed: raise ValueError("unknown complexity family")
+            return {"notation":allowed[family]}
+
+    if domain == "physical_sciences":
+        if operation == "kinetic_energy":
+            return {"joules":0.5*x["mass_kg"]*x["velocity_m_s"]**2}
+        if operation == "ohms_law":
+            if x["resistance_ohm"] == 0: raise ValueError("resistance cannot be zero")
+            return {"current_amp":x["voltage_v"]/x["resistance_ohm"]}
+
+    if domain == "chemical_sciences":
+        if operation == "molarity":
+            if x["volume_l"] == 0: raise ValueError("volume cannot be zero")
+            return {"mol_per_l":x["moles"]/x["volume_l"]}
+        if operation == "reaction_balance_check":
+            return {"balanced":x.get("reactants")==x.get("products")}
+
+    if domain == "earth_environmental_sciences":
+        if operation == "density":
+            if x["volume"] == 0: raise ValueError("volume cannot be zero")
+            return {"density":x["mass"]/x["volume"]}
+        if operation == "temperature_anomaly":
+            return {"anomaly":x["observed"]-x["baseline"]}
+
+    if domain == "biological_sciences":
+        if operation == "exponential_growth":
+            return {"population":x["initial"]*((1+x["rate"])**x["periods"])}
+        if operation == "allele_frequency":
+            total=2*x["aa"]+2*x["AA"]+2*x["Aa"]
+            if total == 0: raise ValueError("population cannot be empty")
+            return {"frequency_A":(2*x["AA"]+x["Aa"])/total}
+
+    if domain == "engineering_technology":
+        if operation == "stress":
+            if x["area"] == 0: raise ValueError("area cannot be zero")
+            return {"stress":x["force"]/x["area"]}
+        if operation == "rc_time_constant":
+            return {"seconds":x["resistance_ohm"]*x["capacitance_f"]}
+
+    if domain == "medical_health_sciences":
+        if operation == "bmi":
+            if x["height_m"] <= 0: raise ValueError("height must be positive")
+            return {"bmi":x["weight_kg"]/(x["height_m"]**2)}
+        if operation == "sensitivity_specificity":
+            tp=x["tp"]; fn=x["fn"]; tn=x["tn"]; fp=x["fp"]
+            sens=tp/(tp+fn) if tp+fn else None
+            spec=tn/(tn+fp) if tn+fp else None
+            return {"sensitivity":sens,"specificity":spec}
+
+    if domain == "agricultural_veterinary_sciences":
+        if operation == "yield_per_area":
+            if x["area"] == 0: raise ValueError("area cannot be zero")
+            return {"yield_per_area":x["output"]/x["area"]}
+        if operation == "feed_conversion_ratio":
+            if x["gain"] == 0: raise ValueError("gain cannot be zero")
+            return {"fcr":x["feed"]/x["gain"]}
+
+    if domain == "social_sciences":
+        if operation == "mean":
+            values=x["values"]
+            if not values: raise ValueError("values cannot be empty")
+            return {"mean":sum(values)/len(values)}
+        if operation == "response_rate":
+            if x["sample"] == 0: raise ValueError("sample cannot be zero")
+            return {"response_rate":x["responses"]/x["sample"]}
+
+    if domain == "humanities_arts":
+        if operation == "text_statistics":
+            words=x.get("words",[])
+            chars=x.get("characters",0)
+            return {"word_count":len(words),"character_count":chars}
+        if operation == "argument_structure_check":
+            required=["premises","conclusion"]
+            return {"valid":all(k in x and bool(x[k]) for k in required)}
+
+    raise ValueError("engine implementation missing")
+
+@app.get("/api/science/engines")
+def science_engines():
+    return {
+        "version":"4.1.0",
+        "engines":DOMAIN_ENGINES,
+        "coverage_status":"representative_executable_primitives",
+        "not_a_complete_solver":True,
+    }
+
+@app.post("/api/science/engine/run")
+def science_engine_run(req: dict):
+    try:
+        domain=req["domain"]
+        operation=req["operation"]
+        result=domain_engine(domain,operation,req.get("payload",{}))
+        payload={"domain":domain,"operation":operation,
+                 "input":req.get("payload",{}),"result":result}
+        return {
+            "status":"verified_computation",
+            "domain":domain,
+            "operation":operation,
+            "result":result,
+            "certificate":make_kernel_certificate(payload,"verified_computation"),
+        }
+    except (KeyError,ValueError,ZeroDivisionError) as e:
+        raise HTTPException(400,str(e))
 
 @app.get("/api")
 def api_root():

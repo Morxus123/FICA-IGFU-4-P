@@ -10,4 +10,4 @@ def test_health():
 def test_final_manifest_is_present():
     r = c.get("/api/final")
     assert r.status_code == 200
-    assert r.json()["version"] in {"3.0.0", "3.1.0", "4.0.0"}
+    assert r.json()["version"] in {"3.0.0", "3.1.0", "4.0.0", "4.1.0"}

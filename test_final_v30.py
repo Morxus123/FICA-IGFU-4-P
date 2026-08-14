@@ -6,7 +6,7 @@ c=TestClient(app)
 def test_final_manifest():
     r=c.get("/api/final")
     assert r.status_code == 200
-    assert r.json()["version"] in {"3.0.0", "3.1.0", "4.0.0"}
+    assert r.json()["version"] in {"3.0.0", "3.1.0", "4.0.0", "4.1.0"}
     assert "physics" in r.json()["scope"]
 
 def test_audit_status():
